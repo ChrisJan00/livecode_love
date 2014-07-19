@@ -45,6 +45,9 @@ Known limitations
 If you have errors on initialization of the game, the library might not be able to capture them.  You can recognize the situation because the error screen will be the default blue from Löve2D.  In that case, you need to close the game and relaunch it when you fix the errors.
 
 ---
+Only files loaded with _love.filesystem.load_ are tracked.  If you use _require_, those files will not be reloaded when changed.  That is a feature of the _require_ function in Lua: once a file is loaded is not loaded again.
+
+---
 If you define local variables in your file, outside of functions, reloading the file will overwrite them.  In this case you can use the "or" idiom to keep the current values.
 
 	local exampleList = {}
@@ -56,11 +59,11 @@ becomes
 In this case "exampleList" will be an empty list the first time the code is run, and will keep its value on successive runs of the same code.
 
 ---
-Depending on your coding style, the changes in your code might not be applied.  For example:
+Depending on your coding style, the changes in your code might not be applied.  For example consider the following code:
 
+	local EntityList = EntityList or {}
 
 	function love.load()
-		EntityList = {}
 		table.insert(EntityList, { x = 0 })
 	end
 
@@ -74,13 +77,11 @@ Depending on your coding style, the changes in your code might not be applied.  
 		end
 	end
 
-In this example, changes in the body of _updateEntity_ will be applied on reload,
-since this is a global function.  Reloading the file will overwrite this function.  The global function is called within _love.update_.
+In this example, changes in the body of _updateEntity_ will be applied on reload, since this is a global function.  Reloading the file will overwrite this function.  This is the desired behaviour.  The new version of the function will then be the one called from within _love.update_.
 
 But if the example had different code in _love.load_ and _love.update_:
 
 	function love.load()
-		EntityList = {}
 		table.insert(EntityList, { x = 0, update = updateEntity })
 	end
 
@@ -90,7 +91,8 @@ But if the example had different code in _love.load_ and _love.update_:
 		end
 	end
 
-In this case, reloading the file after making changes in _updateEntity_ still overwrites it, but the entity itself is still using the old code.  Reloading the file will not show the changes in your update code.  The livereload callback is provided for covering this case, in this example a possibility would be:
+In this case, reloading the file after making changes in _updateEntity_ overwrites it, but the entity itself is still using the old code, since the assignment is made in the uncalled _love.load_.  Reloading the file will not show the changes in _updateEntity_.
+The _love.livereload_ callback is provided for covering this case. In the discussed example one possible implementation would be:
 
 	function love.livereload()
 		for i,entity in ipairs(EntityList) do
@@ -98,7 +100,6 @@ In this case, reloading the file after making changes in _updateEntity_ still ov
 		end
 	end
 
-This ensures that the entity itself calls the latest version of _updateEntity_. _love.livereload_ will be called after the file is reloaded, in that point in time the function has already been overwritten.
-
+This points the entity's _update_ function to the new version of _updateEntity_.
 
 -- Christiaan Janssen, July 2014
