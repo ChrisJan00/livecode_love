@@ -44,6 +44,18 @@ Known limitations
 
 If you have errors on initialization of the game, the library might not be able to capture them.  You can recognize the situation because the error screen will be the default blue from Löve2D.  In that case, you need to close the game and relaunch it when you fix the errors.
 
+---
+If you define local variables in your file, outside of functions, reloading the file will overwrite them.  In this case you can use the "or" idiom to keep the current values.
+
+	local exampleList = {}
+
+becomes
+
+	local exampleList = exampleList or {}
+
+In this case "exampleList" will be an empty list the first time the code is run, and will keep its value on successive runs of the same code.
+
+---
 Depending on your coding style, the changes in your code might not be applied.  For example:
 
 
