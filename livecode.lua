@@ -116,7 +116,7 @@ local function update(dt)
     end
 
     if not errorHappened then
-        pcall(function() love.update(dt) end, manageError)
+        xpcall(function() love.update(dt) end, manageError)
     end
 end
 
