@@ -30,7 +30,8 @@ Control flags:
 --------------
  - **livecode.resetOnLoad** (default: false) :  if set to "true", _love.load()_ will be called when reloading files (instead of love.livereload)
  - **livecode.logReloads**  (default: true) :  if set to "true", the message "updated file _FILENAME_" will be printed on the console output each time _FILENAME_ is reloaded
- - **livecode.reloadOnF5**  (default: true) :  if set to "true", calls _love.load()_ when you press F5 from within the game, effectively resetting the game 
+ - **livecode.reloadOnKeypressed**  (default: true) :  if set to "true", calls _love.load()_ when you press the reload key from within the game, effectively resetting the game 
+ - **livecode.reloadKey** (default: "f5") : defines which is the reload key
  - **livecode.showErrorOnScreen** (default: true) :  When an error occurs, the error message is printed on the console and in the screen, over a black background.  You can correct the error, the file will be automatically reloaded and execution resumed on save (no need to restart the game).  Printing the error on the screen might affect the state of your game (for example, current background and foreground colors are discarded, active canvas is set to screen and scissor is disabled). If you want to prevent that to happen, you can set this flag to "false", so that errors will only be printed in the console output, and the screen will be rendered plain black.
 
 For changing the flags, the easiest way is to include this library by
@@ -39,7 +40,7 @@ For changing the flags, the easiest way is to include this library by
 
 Then, for example
 
-	livecode.reloadOnF5 = false
+	livecode.reloadOnKeypressed = false
 
 
 Known limitations

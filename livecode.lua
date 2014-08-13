@@ -17,7 +17,7 @@
 -- livecode.resetOnLoad -> if set to "true", love.load() will be called when reloading files (instead of love.livereload)
 -- livecode.logReloads  -> if set to "true", the message "updated file _FILENAME_" will be printed on the console output 
 --                        each time _FILENAME_ is reloaded
--- livecode.reloadOnF5  -> if set to "true", calls love.load() when you press F5 from within the game, effectively resetting the game
+-- livecode.reloadOnKeypressed -> if set to "true", calls love.load() when you press F5 from within the game, effectively resetting the game
 -- livecode.showErrorOnScreen -> When an error occurs, the error message is printed on the console by default.  You can correct the
 --                          error and the file will be automatically reloaded and execution resumed on save (no need to restart the game)
 --                          however, the game screen will apear plain black.  This is done on purpose, so that your state (transformations,
@@ -25,11 +25,12 @@
 --                          the game screen, set this flag to true.  Font and transformations will be restored when resuming, but other
 --                          changes (e.g. current canvas, scissors) will be lost.  If you draw function restitutes them, this will not
 --                          be a problem.
+-- livecode.reloadKey -> which key triggers a reload
 
 local livecode = {}
 livecode.resetOnLoad = false
 livecode.logReloads = true
-livecode.reloadOnF5 = true
+livecode.reloadOnKeypressed = true
 livecode.reloadKey = "f5"
 livecode.showErrorOnScreen = true
 
@@ -160,7 +161,7 @@ function love.run()
             end
 
             ok = xpcall(function() love.handlers[e](a,b,c,d) end, manageError)
-            if livecode.reloadOnF5 and a == livecode.reloadKey and e == "keypressed" then
+            if livecode.reloadOnKeypressed and a == livecode.reloadKey and e == "keypressed" then
                 disableError()
                 xpcall(love.load, manageError)
             end
