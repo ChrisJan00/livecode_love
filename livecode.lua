@@ -30,6 +30,7 @@ local livecode = {}
 livecode.resetOnLoad = false
 livecode.logReloads = true
 livecode.reloadOnF5 = true
+livecode.reloadKey = "f5"
 livecode.showErrorOnScreen = true
 
 local errorHappened = false
@@ -159,7 +160,7 @@ function love.run()
             end
 
             ok = xpcall(function() love.handlers[e](a,b,c,d) end, manageError)
-            if livecode.reloadOnF5 and a=="f5" and e == "keypressed" then
+            if livecode.reloadOnF5 and a == livecode.reloadKey and e == "keypressed" then
                 disableError()
                 xpcall(love.load, manageError)
             end
