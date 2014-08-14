@@ -95,6 +95,10 @@ local function update(dt)
     local ok
     local anyFileModified = false
     for filename,timestamp in pairs(timestamps) do
+        if love.filesystem.exists(filename) and not timestamp then
+            timestamps[filename] = love.filesystem.getLastModified(filename)
+            timestamp = timestamps[filename]
+        end
         if timestamp < love.filesystem.getLastModified(filename) then
             if livecode.logReloads then
                 print("updated file "..filename)
