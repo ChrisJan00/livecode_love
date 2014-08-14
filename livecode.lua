@@ -99,7 +99,7 @@ local function update(dt)
             timestamps[filename] = love.filesystem.getLastModified(filename)
             timestamp = timestamps[filename]
         end
-        if timestamp < love.filesystem.getLastModified(filename) then
+        if timestamp and timestamp < love.filesystem.getLastModified(filename) then
             if livecode.logReloads then
                 print("updated file "..filename)
             end
