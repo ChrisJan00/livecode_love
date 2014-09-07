@@ -192,4 +192,9 @@ function love.run()
   end
 end
 
+-- placeholder empty callbacks
+love.load = love.load or function() end
+love.update = love.update or function(dt) end
+love.draw = love.draw or function() end
+
 return livecode
