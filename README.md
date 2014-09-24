@@ -33,6 +33,7 @@ Control flags:
  - **livecode.reloadOnKeypressed**  (default: true) :  if set to "true", calls _love.load()_ when you press the reload key from within the game, effectively resetting the game 
  - **livecode.reloadKey** (default: "f5") : defines which is the reload key
  - **livecode.showErrorOnScreen** (default: true) :  When an error occurs, the error message is printed on the console and in the screen, over a black background.  You can correct the error, the file will be automatically reloaded and execution resumed on save (no need to restart the game).  Printing the error on the screen might affect the state of your game (for example, current background and foreground colors are discarded, active canvas is set to screen and scissor is disabled). If you want to prevent that to happen, you can set this flag to "false", so that errors will only be printed in the console output, and the screen will be rendered plain black.
+ - **livecode.trackAssets** (default: true) : Enables/disables asset file tracking (see explanation below)
 
 For changing the flags, the easiest way is to include this library by
 
@@ -41,6 +42,28 @@ For changing the flags, the easiest way is to include this library by
 Then, for example
 
 	livecode.reloadOnKeypressed = false
+
+
+Tracking Assets
+---------------
+Sometimes you want to track non-code files (e.g. images), and have the game perform a specific operation when they change (typically, reload).  You can bind filenames to functions by calling
+
+	livecode.trackFile( filename, function, delay )
+
+Livecode will start monitoring changes in "filename".  When the timestamp changes,
+the function you provided will be called.  Additionally, you can specify a delay
+in milliseconds for "function" to be called after the timestamp has changed. Some
+programs touch the file modification date when they start saving the data, not when
+finished, which could result in your function being called too soon and therefore
+reading incomplete data.  This optional parameter (which defaults to 0, instantaneous)
+is there for this purpose.
+If you want to stop tracking an asset you were tracking, just call trackFile with no
+function:
+
+	livecode.trackFile( filename )
+
+Asset tracking can be disabled by setting the trackAssets flag to false.
+
 
 
 Known limitations

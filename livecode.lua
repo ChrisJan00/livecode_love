@@ -26,6 +26,10 @@
 --                          changes (e.g. current canvas, scissors) will be lost.  If you draw function restitutes them, this will not
 --                          be a problem.
 -- livecode.reloadKey -> which key triggers a reload
+-- livecode.trackFile(filename, func, delay) -> if filename changes, exec func after delay msec (delay is optional).
+--                      the purpose of delay is because programs like gimp touch the file in the filesystem at the
+--                      beginning of saving it. If we reload an image at that point, the file will be "corrupted".
+--                      to prevent that, "delay" is meant to give time to gimp to save the thing.
 
 local livecode = {}
 livecode.resetOnLoad = false
@@ -33,10 +37,13 @@ livecode.logReloads = true
 livecode.reloadOnKeypressed = true
 livecode.reloadKey = "f5"
 livecode.showErrorOnScreen = true
+livecode.trackAssets = true
 
 local errorHappened = false
 local errorMsg = ""
 local timestamps = { ["main.lua"] = love.filesystem.getLastModified("main.lua") }
+local trackedAssets = {}
+local scheduledAssets = {}
 local storedFont = nil
 
 -- override filesystem.load
@@ -94,6 +101,8 @@ end
 local function update(dt)
     local ok
     local anyFileModified = false
+
+    -- track source files
     for filename,timestamp in pairs(timestamps) do
         if love.filesystem.exists(filename) and not timestamp then
             timestamps[filename] = love.filesystem.getLastModified(filename)
@@ -109,6 +118,36 @@ local function update(dt)
 
             if xpcall(chunk, manageError) then
                 anyFileModified = true
+            end
+        end
+    end
+
+    if livecode.trackAssets then
+        -- track asset files
+        for filename,assetData in pairs(trackedAssets) do
+            if love.filesystem.exists(filename) then
+                local timestamp = love.filesystem.getLastModified(filename)
+                if assetData.timestamp < timestamp then
+                    assetData.timestamp = timestamp
+                    if assetData.delay then
+                        scheduledAssets[assetData.func] = love.timer.getTime() + assetData.delay
+                    else
+                        if xpcall(assetData.func, manageError) then
+                            anyFileModified = true
+                        end
+                    end
+                end
+            end
+        end
+
+        -- eval scheduled assets
+        for func, atime in pairs(scheduledAssets) do
+            local ltime = love.timer.getTime()
+            if ltime >= atime then
+                scheduledAssets[func] = nil
+                if xpcall(func, manageError) then
+                    anyFileModified = true
+                end
             end
         end
     end
@@ -190,6 +229,20 @@ function love.run()
 
     if love.timer then love.timer.sleep(0.001) end
   end
+end
+
+function livecode.trackFile(filename, func, delay)
+    if not func then
+        trackedAssets[filename] = nil
+        return
+    end
+
+    trackedAssets[filename] = {
+        func = func,
+        timestamp = love.filesystem.exists(filename) and love.filesystem.getLastModified(filename) or 0,
+        delay = delay/1000
+    }
+
 end
 
 -- placeholder empty callbacks
