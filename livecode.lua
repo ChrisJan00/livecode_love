@@ -187,6 +187,7 @@ function love.run()
 
 
     local dt = 0
+    local ok
 
     -- Main loop time.
     while true do
