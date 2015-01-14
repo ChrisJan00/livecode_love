@@ -39,6 +39,8 @@ livecode.reloadKey = "f5"
 livecode.showErrorOnScreen = true
 livecode.trackAssets = true
 
+-- io.stdout:setvbuf("line")
+
 local errorHappened = false
 local errorMsg = ""
 local timestamps = { ["main.lua"] = love.filesystem.getLastModified("main.lua") }
