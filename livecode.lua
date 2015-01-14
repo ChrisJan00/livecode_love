@@ -26,11 +26,12 @@
 --                          changes (e.g. current canvas, scissors) will be lost.  If you draw function restitutes them, this will not
 --                          be a problem.
 -- livecode.reloadKey -> which key triggers a reload
+-- livecode.trackAssets -> if set to "true", it will watch asset files added via trackFile (see below)
 -- livecode.trackFile(filename, func, delay) -> if filename changes, exec func after delay msec (delay is optional).
 --                      the purpose of delay is because programs like gimp touch the file in the filesystem at the
 --                      beginning of saving it. If we reload an image at that point, the file will be "corrupted".
 --                      to prevent that, "delay" is meant to give time to gimp to save the thing.
-
+-- livecode.autoflushOutput -> if set to "true", everything sent to stdout will be printed immediately, on a per-line basis
 
 -- zlib license
 -- Copyright (c) 2014-2015 Christiaan Janssen
@@ -59,15 +60,21 @@ livecode.reloadOnKeypressed = true
 livecode.reloadKey = "f5"
 livecode.showErrorOnScreen = true
 livecode.trackAssets = true
+livecode.autoflushOutput = true
 
--- io.stdout:setvbuf("line")
 
+-- internal
 local errorHappened = false
 local errorMsg = ""
 local timestamps = { ["main.lua"] = love.filesystem.getLastModified("main.lua") }
 local trackedAssets = {}
 local scheduledAssets = {}
 local storedFont = nil
+
+
+if livecode.autoflushOutput then
+    io.stdout:setvbuf("line")
+end
 
 -- override filesystem.load
 local orig_loadfile = love.filesystem.load
@@ -218,41 +225,41 @@ function love.run()
         if love.event then
             love.event.pump()
             for e,a,b,c,d in love.event.poll() do
-            if e == "quit" then
-                if not love.quit or not love.quit() then
-                    if love.audio then
-                        love.audio.stop()
+                if e == "quit" then
+                    if not love.quit or not love.quit() then
+                        if love.audio then
+                            love.audio.stop()
+                        end
+                        return
                     end
-                return
+                end
+
+                ok = xpcall(function() love.handlers[e](a,b,c,d) end, manageError)
+                if livecode.reloadOnKeypressed and a == livecode.reloadKey and e == "keypressed" then
+                    disableError()
+                    xpcall(love.load, manageError)
                 end
             end
-
-            ok = xpcall(function() love.handlers[e](a,b,c,d) end, manageError)
-            if livecode.reloadOnKeypressed and a == livecode.reloadKey and e == "keypressed" then
-                disableError()
-                xpcall(love.load, manageError)
-            end
         end
+
+        -- Update dt, as we'll be passing it to update
+        if love.timer then
+            love.timer.step()
+            dt = love.timer.getDelta()
+        end
+
+        -- Call update and draw
+        if love.update then update(dt) end -- will pass 0 if love.timer is disabled
+
+        if love.window and love.graphics then
+            love.graphics.clear()
+            love.graphics.origin()
+            if love.draw then draw() end
+            love.graphics.present()
+        end
+
+        if love.timer then love.timer.sleep(0.001) end
     end
-
-    -- Update dt, as we'll be passing it to update
-    if love.timer then
-        love.timer.step()
-        dt = love.timer.getDelta()
-    end
-
-    -- Call update and draw
-    if love.update then update(dt) end -- will pass 0 if love.timer is disabled
-
-    if love.window and love.graphics then
-        love.graphics.clear()
-        love.graphics.origin()
-        if love.draw then draw() end
-        love.graphics.present()
-    end
-
-    if love.timer then love.timer.sleep(0.001) end
-  end
 end
 
 function livecode.trackFile(filename, func, delay)

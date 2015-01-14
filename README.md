@@ -34,6 +34,7 @@ Control flags:
  - **livecode.reloadKey** (default: "f5") : defines which is the reload key
  - **livecode.showErrorOnScreen** (default: true) :  When an error occurs, the error message is printed on the console and in the screen, over a black background.  You can correct the error, the file will be automatically reloaded and execution resumed on save (no need to restart the game).  Printing the error on the screen might affect the state of your game (for example, current background and foreground colors are discarded, active canvas is set to screen and scissor is disabled). If you want to prevent that to happen, you can set this flag to "false", so that errors will only be printed in the console output, and the screen will be rendered plain black.
  - **livecode.trackAssets** (default: true) : Enables/disables asset file tracking (see explanation below)
+ - **livecode.autoflushOutput** (default: true) : Prints standard output immediately on each line instead of buffering it
 
 For changing the flags, the easiest way is to include this library by
 
