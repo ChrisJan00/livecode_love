@@ -129,7 +129,7 @@ end
 
 -- update function
 local function update(dt)
-    local ok
+    local ok, chunk
     local anyFileModified = false
 
     -- track source files
