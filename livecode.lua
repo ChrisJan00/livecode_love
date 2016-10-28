@@ -1,4 +1,4 @@
--- livecode.lua 
+-- livecode.lua
 -- by Christiaan Janssen
 -- based on LICK
 --
@@ -6,16 +6,16 @@
 -- Overwrites love.run, pressing all errors to the terminal/console
 --
 -- Usage:
--- require "livecode" 
+-- require "livecode"
 -- at the beginning on main.lua.  No further changes needed
 --
 -- When you load extra files via love.filesystem.load(..), they will be tracked by the system.
 -- Each time you save one of these files it will be reloaded automatically and the changes applied.
--- Additionally, the new callback love.livereload will be called if it exists. 
+-- Additionally, the new callback love.livereload will be called if it exists.
 --
 -- Control:
 -- livecode.resetOnLoad -> if set to "true", love.load() will be called when reloading files (instead of love.livereload)
--- livecode.logReloads  -> if set to "true", the message "updated file _FILENAME_" will be printed on the console output 
+-- livecode.logReloads  -> if set to "true", the message "updated file _FILENAME_" will be printed on the console output
 --                        each time _FILENAME_ is reloaded
 -- livecode.reloadOnKeypressed -> if set to "true", calls love.load() when you press F5 from within the game, effectively resetting the game
 -- livecode.showErrorOnScreen -> When an error occurs, the error message is printed on the console by default.  You can correct the
@@ -204,61 +204,122 @@ local function draw()
     end
 end
 
+if love._version_minor <= 9 then
+    -- use the 0.9 version of run for older ones
+    -- (might break stuff, but who uses those old versions of love2d anyway?)
+    function love.run()
+        math.randomseed(os.time())
+        math.random() math.random()
 
-function love.run()
-    math.randomseed(os.time())
-    math.random() math.random()
-
-    if love.event then
-        love.event.pump()
-    end
-
-    if love.load then love.load(arg) end
-
-
-    local dt = 0
-    local ok
-
-    -- Main loop time.
-    while true do
-        -- Process events.
         if love.event then
             love.event.pump()
-            for e,a,b,c,d in love.event.poll() do
-                if e == "quit" then
-                    if not love.quit or not love.quit() then
-                        if love.audio then
-                            love.audio.stop()
+        end
+
+        if love.load then love.load(arg) end
+
+
+        local dt = 0
+        local ok
+
+        -- Main loop time.
+        while true do
+            -- Process events.
+            if love.event then
+                love.event.pump()
+                for e,a,b,c,d in love.event.poll() do
+                    if e == "quit" then
+                        if not love.quit or not love.quit() then
+                            if love.audio then
+                                love.audio.stop()
+                            end
+                            return
                         end
-                        return
+                    end
+
+                    ok = xpcall(function() love.handlers[e](a,b,c,d) end, manageError)
+                    if livecode.reloadOnKeypressed and a == livecode.reloadKey and e == "keypressed" then
+                        disableError()
+                        xpcall(love.load, manageError)
                     end
                 end
+            end
 
-                ok = xpcall(function() love.handlers[e](a,b,c,d) end, manageError)
-                if livecode.reloadOnKeypressed and a == livecode.reloadKey and e == "keypressed" then
-                    disableError()
-                    xpcall(love.load, manageError)
+            -- Update dt, as we'll be passing it to update
+            if love.timer then
+                love.timer.step()
+                dt = love.timer.getDelta()
+            end
+
+            -- Call update and draw
+            if love.update then update(dt) end -- will pass 0 if love.timer is disabled
+
+            if love.window and love.graphics then
+                love.graphics.clear()
+                love.graphics.origin()
+                if love.draw then draw() end
+                love.graphics.present()
+            end
+
+            if love.timer then love.timer.sleep(0.001) end
+        end
+    end
+else
+    -- love version 0.10.x (and newer, by now)
+    function love.run()
+        if love.math then
+            love.math.setRandomSeed(os.time())
+        end
+
+        if love.load then love.load(arg) end
+
+        if love.event then
+            love.event.pump()
+        end
+
+        -- We don't want the first frame's dt to include time taken by love.load.
+        if love.timer then love.timer.step() end
+
+        local dt = 0
+        local ok
+
+        -- Main loop time.
+        while true do
+            -- Process events.
+            if love.event then
+                love.event.pump()
+                for name,a,b,c,d,e,f in love.event.poll() do
+                    if name == "quit" then
+                        if not love.quit or not love.quit() then
+                            return a
+                        end
+                    end
+
+                    ok = xpcall(function() love.handlers[name](a,b,c,d,e,f) end, manageError)
+                    if livecode.reloadOnKeypressed and a == livecode.reloadKey and name == "keypressed" then
+                        disableError()
+                        xpcall(love.load, manageError)
+                    end
                 end
             end
+
+            -- Update dt, as we'll be passing it to update
+            if love.timer then
+                love.timer.step()
+                dt = love.timer.getDelta()
+            end
+
+            -- Call update and draw
+            if love.update then update(dt) end -- will pass 0 if love.timer is disabled
+
+            if love.graphics and love.graphics.isActive() then
+                love.graphics.clear(love.graphics.getBackgroundColor())
+                love.graphics.origin()
+                if love.draw then draw() end
+                love.graphics.present()
+            end
+
+            if love.timer then love.timer.sleep(0.001) end
         end
-
-        -- Update dt, as we'll be passing it to update
-        if love.timer then
-            love.timer.step()
-            dt = love.timer.getDelta()
-        end
-
-        -- Call update and draw
-        if love.update then update(dt) end -- will pass 0 if love.timer is disabled
-
-        if love.window and love.graphics then
-            love.graphics.clear()
-            love.graphics.origin()
-            if love.draw then draw() end
-            love.graphics.present()
-        end
-
-        if love.timer then love.timer.sleep(0.001) end
     end
 end
 
