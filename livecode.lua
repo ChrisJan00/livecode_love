@@ -32,6 +32,8 @@
 --                      beginning of saving it. If we reload an image at that point, the file will be "corrupted".
 --                      to prevent that, "delay" is meant to give time to gimp to save the thing.
 -- livecode.autoflushOutput -> if set to "true", everything sent to stdout will be printed immediately, on a per-line basis
+-- livecode.errorCallback(errorText) -> implement this callback if you want to process the error message to be displayed when
+--                      an error occurs
 
 -- zlib license
 -- Copyright (c) 2014-2015 Christiaan Janssen
@@ -61,6 +63,7 @@ livecode.reloadKey = "f5"
 livecode.showErrorOnScreen = true
 livecode.trackAssets = true
 livecode.autoflushOutput = true
+livecode.errorCallback = nil
 
 
 -- internal
@@ -112,6 +115,10 @@ local function manageError(msg)
     local p = (debug.traceback("Error: " .. tostring(msg), 2):gsub("\n[^\n]+$", ""))
     p = string.gsub(p, "%[string \"(.-)\"%]", "")
     p = string.gsub(p, "\n\t+%[C%]: in function 'xpcall'", "")
+
+    if livecode.errorCallback then
+        p = livecode.errorCallback(p)
+    end
 
     if livecode.showErrorOnScreen then
         storeState()
